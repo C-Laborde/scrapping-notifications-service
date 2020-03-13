@@ -1,0 +1,10 @@
+
+# pycache
+__pycache__/
+# pyc files
+*.pyc
+**/.ipynb_checkpoints
+.vscode
+# notebooks are ignored. Jupytext scripts should be checked in instead.
+**/*.ipynb
+
