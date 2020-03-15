@@ -9,10 +9,12 @@ def parse_res(res):
     try:
         res_loc = res.split("-")[0]
         res_vis = res.split("-")[1]
+        played = 1
     except IndexError:
         res_loc = "None"
         res_vis = "None"
-    return res_loc, res_vis
+        played = 0
+    return res_loc, res_vis, played
 
 def parse_sets(sets):
     try:
@@ -23,7 +25,7 @@ def parse_sets(sets):
 
 
 def main(request):
-    WEEKEND = str(6)
+    WEEKEND = str(7)
     url1 = "http://competicio.fcvoleibol.cat/competiciones.asp?torneo=4253&jornada=" + WEEKEND
     page = requests.get(url1)
 
@@ -45,14 +47,15 @@ def main(request):
     # TODO use columns names to check if right table
     # TODO check if len(useful_results is 5, the table has 5 rows)
 
-    table_rows = []
     games = []
+    played_games = 0
     # The first row are the columns labels, games details start on the second row
     for i in range(1, len(table)):
         game = table[i]
         game_components = game.find_all('td')
         res = game_components[1].contents
-        res_loc, res_vis = parse_res(res[0])
+        res_loc, res_vis, played = parse_res(res[0])
+        played_games += played
         sets = parse_sets(game_components[3].contents)
         game_struct = {"LOCAL": game_components[0].find('a', class_='discreto').contents,
                     "VISITANT": game_components[2].find('a', class_='discreto').contents,
@@ -63,6 +66,8 @@ def main(request):
     
     # If all the results are empty we can finish here. Only dump when there
     # has been a result
+    if played_games == 0:
+        return "204: No game results"
     
     # This is to format the document into a json format
     weekend_id = "WEEKEND" + WEEKEND
