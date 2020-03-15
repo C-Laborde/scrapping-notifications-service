@@ -25,7 +25,7 @@ def parse_sets(sets):
 
 
 def main(request):
-    WEEKEND = str(7)
+    WEEKEND = str(6)
     url1 = "http://competicio.fcvoleibol.cat/competiciones.asp?torneo=4253&jornada=" + WEEKEND
     page = requests.get(url1)
 
@@ -88,11 +88,17 @@ def main(request):
     # Now we should check for the same doc in the database.
     # It it doesn't exist: dump the doc
     doc_ref = db.collection(u'games').document(weekend_id)
-    doc_ref.set(document)
-
+    restored_doc = doc_ref.get()
+    if not restored_doc.exists:
+        doc_ref.set(document)
+        # TODO send email!
     # It it exists: load it and compare
-    doc = db.collection(u'games').document(weekend_id).get()
-    
-    # return doc.to_dict()
-    print("DOC: ", doc.to_dict())
+    else: 
+        # TODO compare restored_doc with document. Be carefull with N and None
+        restored_dic = restored_doc.to_dict()
+        # if restored_dic == restored_doc:
+            # return 204
+        # else:
+            # send email
+    print("DOC: ", restored_doc.to_dict())
     return str(200)
