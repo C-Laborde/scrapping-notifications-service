@@ -11,17 +11,30 @@ def parse_res(res):
         res_vis = res.split("-")[1]
         played = 1
     except IndexError:
-        res_loc = "None"
-        res_vis = "None"
+        res_loc = "-"
+        res_vis = "-"
         played = 0
     return res_loc, res_vis, played
 
 def parse_sets(sets):
     try:
-        return sets[0]
+        return sets
     except IndexError:
-        return "None"
-    
+        return "-"
+
+# TODO
+def doc_comparison(restored, document):
+    if not sorted(restored.keys()) == sorted(document.keys()):
+        print("RESTORED KEYS: ", restored.keys())
+        print("DOCUMENT KEYS: ", document.keys())
+        raise KeyError("Documents have different keys")
+    equal = True
+    for game in restored.keys():
+        results_restored = [restored[game]["RESULT-LOCAL"], restored[game]["RESULT-VISITANT"]]
+        results_doc = [document[game]["RESULT-LOCAL"], document[game]["RESULT-VISITANT"]]
+        if results_restored != results_doc:
+            return False
+    return True
 
 
 def main(request):
@@ -82,11 +95,12 @@ def main(request):
 
     document = {}
     for i, game in enumerate(games):
-        document["GAME" + str(i + 1)] = {k: names_parse.get(v[0], v[0]) for k, v in game.items()}
+        document["GAME" + str(i + 1)] = {k: names_parse.get(v[0], v[0])
+                                         for k, v in game.items()}
     # TODO check that all values in dics have length 1
 
     # Now we should check for the same doc in the database.
-    # It it doesn't exist: dump the doc
+    # If it doesn't exist: dump the doc
     doc_ref = db.collection(u'games').document(weekend_id)
     restored_doc = doc_ref.get()
     if not restored_doc.exists:
@@ -95,10 +109,12 @@ def main(request):
     # It it exists: load it and compare
     else: 
         # TODO compare restored_doc with document. Be carefull with N and None
-        restored_dic = restored_doc.to_dict()
-        # if restored_dic == restored_doc:
-            # return 204
-        # else:
+        restored_dict = restored_doc.to_dict()
+        are_equal = doc_comparison(restored_dict, document)
+        if are_equal:
+            return str(204)
+        else:
+            doc_ref.set(document)
+            print("send email")
             # send email
-    print("DOC: ", restored_doc.to_dict())
     return str(200)
