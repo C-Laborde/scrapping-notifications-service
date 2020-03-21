@@ -4,6 +4,7 @@ from google.cloud import firestore
 import json
 import smtplib
 from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 
 db = firestore.Client()
@@ -40,14 +41,42 @@ def doc_comparison(restored, document):
     return True
 
 
-def send_email():
+def send_email(weekend_id, document):
     print("HERE!")
     with open("mail_cred.json", "r") as f:
         cred = json.load(f)
-    msg = MIMEText('Testing some Mailgun awesomness')
-    msg['Subject'] = "Hello"
+    # msg = MIMEText(text)
+
+    msg = MIMEMultipart("alternative")
+    msg['Subject'] = "FCVResultats jornada " + weekend_id
     msg['From']    = cred["mailgun"]["username"]
     msg['To']      = cred["mailgun"]["to"]
+
+    weekend_nr = weekend_id.split("WEEKEND")[1]
+    text = '\
+        Hay nuevos resultados disponibles de la jornada ' + weekend_nr
+    html = f"""\
+    <html>
+        <body>
+            <p>
+            Hola, <br> Hay nuevos resultados disponibles de la <//br>
+            <a href= "http://competicio.fcvoleibol.cat/competiciones.asp?torneo=4253&jornada=6"> jornada {weekend_nr} </a>
+            </p>
+            <p>
+            {document}
+            </p>
+        </body>
+    </html>
+    """
+
+    # Turn these into plain/html MIMEText objects
+    part1 = MIMEText(text, "plain")
+    part2 = MIMEText(html, "html")
+
+    # Add HTML/plain-text parts to MIMEMultipart message
+    # The email client will try to render the last part first
+    msg.attach(part1)
+    msg.attach(part2)
 
     s = smtplib.SMTP('smtp.mailgun.org', 587)
 
@@ -118,7 +147,7 @@ def main(request):
         document["GAME" + str(i + 1)] = {k: names_parse.get(v[0], v[0])
                                          for k, v in game.items()}
     # TODO check that all values in dics have length 1
-    send_email()
+    send_email(weekend_id, document)
     # Now we should check for the same doc in the database.
     # If it doesn't exist: dump the doc
     doc_ref = db.collection(u'games').document(weekend_id)
