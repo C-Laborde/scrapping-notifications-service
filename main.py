@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 from google.cloud import firestore
 import json
+import os
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -73,17 +74,17 @@ def send_email(weekend_id, document):
 
     # Turn these into plain/html MIMEText objects
     part1 = MIMEText(text, "plain")
-    part2 = MIMEText(html, "html")
+    # part2 = MIMEText(html, "html")
 
     # Add HTML/plain-text parts to MIMEMultipart message
     # The email client will try to render the last part first
-    msg.attach(part1)
-    msg.attach(part2)
+    # msg.attach(part1)
+    # msg.attach(part2)
 
-    s = smtplib.SMTP('smtp.mailgun.org', 587)
+    s = smtplib.SMTP(smtp_host, smtp_port)
 
     # s.login('postmaster@YOUR_DOMAIN_NAME', '3kh9umujora5')
-    s.login(cred["mailgun"]["username"], cred["mailgun"]["password"])
+    s.login(smtp_username, smtp_password)
     s.sendmail(msg['From'], msg['To'], msg.as_string())
     s.quit()
     
@@ -156,7 +157,7 @@ def main(request):
     restored_doc = doc_ref.get()
     if not restored_doc.exists:
         doc_ref.set(document)
-        send_email(document.to_dict())
+        send_email(weekend_id, document)
 
     # It it exists: load it and compare
     else: 
@@ -168,5 +169,5 @@ def main(request):
         else:
             doc_ref.set(document)
             print("send email")
-            send_email(document.to_dict())
+            send_email(weekend_id, document)
     return str(200)
