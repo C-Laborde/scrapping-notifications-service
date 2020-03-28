@@ -43,14 +43,11 @@ def doc_comparison(restored, document):
 
 def send_email(weekend_id, document):
     print("HERE!")
-    with open("mail_cred.json", "r") as f:
-        cred = json.load(f)
-    # msg = MIMEText(text)
-
-    msg = MIMEMultipart("alternative")
-    msg['Subject'] = "FCVResultats jornada " + weekend_id
-    msg['From']    = cred["mailgun"]["username"]
-    msg['To']      = cred["mailgun"]["to"]
+    smtp_username = os.getenv("SMTP_USERNAME")
+    smtp_password = os.getenv("SMTP_PASSWORD")
+    smtp_port = os.getenv("SMTP_PORT")
+    smtp_host = os.getenv("SMTP_HOST")
+    smtp_to = os.getenv("SMTP_TO")
 
     weekend_nr = weekend_id.split("WEEKEND")[1]
     text = '\
@@ -68,6 +65,11 @@ def send_email(weekend_id, document):
         </body>
     </html>
     """
+    msg = MIMEText(text)
+    # msg = MIMEMultipart("alternative")
+    msg['Subject'] = "FCVResultats jornada " + weekend_id
+    msg['From']    = smtp_username
+    msg['To']      = smtp_to
 
     # Turn these into plain/html MIMEText objects
     part1 = MIMEText(text, "plain")
@@ -147,16 +149,15 @@ def main(request):
         document["GAME" + str(i + 1)] = {k: names_parse.get(v[0], v[0])
                                          for k, v in game.items()}
     # TODO check that all values in dics have length 1
-    send_email(weekend_id, document)
+
     # Now we should check for the same doc in the database.
     # If it doesn't exist: dump the doc
     doc_ref = db.collection(u'games').document(weekend_id)
     restored_doc = doc_ref.get()
     if not restored_doc.exists:
         doc_ref.set(document)
-        # send_email(document.to_dict())
-        print("BEFORE HERE")
-        # send_email()
+        send_email(document.to_dict())
+
     # It it exists: load it and compare
     else: 
         # TODO compare restored_doc with document. Be carefull with N and None
@@ -167,5 +168,5 @@ def main(request):
         else:
             doc_ref.set(document)
             print("send email")
-            # send email
+            send_email(document.to_dict())
     return str(200)
