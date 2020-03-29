@@ -4,6 +4,8 @@ Service to scrap the Federacio Catalana de Voleibol website (competicio.fcvoleib
 
 following this tutorial
 https://dev.to/googlecloud/moving-your-cron-job-to-the-cloud-with-google-cloud-functions-1ecp
+and this for email part
+https://realpython.com/python-send-email/#option-2-setting-up-a-local-smtp-server
 
 pip install functions-framework
 $ functions-framework --target my_function
