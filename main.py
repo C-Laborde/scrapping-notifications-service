@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 from google.cloud import firestore
 import json
-import os
+import os, ssl
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -81,12 +81,18 @@ def send_email(weekend_id, document):
     # msg.attach(part1)
     # msg.attach(part2)
 
-    s = smtplib.SMTP(smtp_host, smtp_port)
-
-    # s.login('postmaster@YOUR_DOMAIN_NAME', '3kh9umujora5')
-    s.login(smtp_username, smtp_password)
-    s.sendmail(msg['From'], msg['To'], msg.as_string())
-    s.quit()
+    # Create a secure SSL context
+    context = ssl.create_default_context()
+    # Try to log in to server and send email
+    try:
+        s = smtplib.SMTP(smtp_host, smtp_port)
+        s.starttls(context=context)     # Secure connection
+        s.login(smtp_username, smtp_password)
+        s.sendmail(msg['From'], msg['To'], msg.as_string())
+    except Exception as e:
+        print(e)
+    finally:
+        s.quit()
     
 
 def main(request):
