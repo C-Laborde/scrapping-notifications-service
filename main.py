@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 from google.cloud import firestore
 import json
+import logging
 import os, ssl
 import smtplib
 from email.mime.text import MIMEText
@@ -126,14 +127,17 @@ def send_email(weekend_id, document):
         s.starttls(context=context)     # Secure connection
         s.login(smtp_username, smtp_password)
         s.sendmail(msg['From'], msg['To'], msg.as_string())
+        logging.info("Email sent")
     except Exception as e:
-        print(e)
+        logging.error(e)
     finally:
         s.quit()
     
 
 def main(request):
-    WEEKEND = str(6)
+    logger = logging.getLogger("dev")
+    logger.setLevel(logging.DEBUG)
+    WEEKEND = str(7)
     url1 = "http://competicio.fcvoleibol.cat/competiciones.asp?torneo=4253&jornada=" + WEEKEND
     page = requests.get(url1)
 
@@ -171,9 +175,9 @@ def main(request):
                     "RESULT-VISITANT": res_vis,
                     "SETS": sets}
         games.append(game_struct)
-    
-    # If all the results are empty we can finish here. Only dump when there
-    # has been a result
+    print("GAMES: ", games)
+    If all the results are empty we can finish here. Only dump when there
+    has been a result
     if played_games == 0:
         return "204: No game results"
     
@@ -193,12 +197,13 @@ def main(request):
         document["GAME" + str(i + 1)] = {k: names_parse.get(v[0], v[0])
                                          for k, v in game.items()}
     # TODO check that all values in dics have length 1
-    send_email(weekend_id, document)
+
     # Now we should check for the same doc in the database.
-    # If it doesn't exist: dump the doc
+    # If it doesn't exist: dump the doc and send email
     doc_ref = db.collection(u'games').document(weekend_id)
     restored_doc = doc_ref.get()
     if not restored_doc.exists:
+        logging.info("First event of this weekend has been found")
         doc_ref.set(document)
         send_email(weekend_id, document)
 
@@ -208,9 +213,10 @@ def main(request):
         restored_dict = restored_doc.to_dict()
         are_equal = doc_comparison(restored_dict, document)
         if are_equal:
+            logging.info("No new games results were reported")
             return str(204)
         else:
             doc_ref.set(document)
-            print("send email")
+            logging.info("A new game result has been reported ")
             send_email(weekend_id, document)
     return str(200)
