@@ -24,9 +24,9 @@ def parse_res(res):
     return res_loc, res_vis, played
 
 def parse_sets(sets):
-    try:
+   if len(sets) > 0:
         return sets
-    except IndexError:
+    else:
         return "-"
 
 def doc_comparison(restored, document):
