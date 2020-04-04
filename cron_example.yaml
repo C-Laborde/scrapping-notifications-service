@@ -1,7 +1,0 @@
-cron:
-- description: "check results job"
-# TODO add url
-  url: 
-  timezone: CET
-  # schedule: every 5 minutes of monday, saturday, sunday
-  schedule: every day
