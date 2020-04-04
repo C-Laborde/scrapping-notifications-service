@@ -24,7 +24,7 @@ def parse_res(res):
     return res_loc, res_vis, played
 
 def parse_sets(sets):
-   if len(sets) > 0:
+    if len(sets) > 0:
         return sets
     else:
         return "-"
@@ -91,7 +91,7 @@ def html_msg(weekend_nr, document):
     </html>
     """
 
-def send_email(weekend_id, document):
+def send_email(weekend_id, document, logger):
     smtp_username = os.getenv("SMTP_USERNAME")
     smtp_password = os.getenv("SMTP_PASSWORD")
     smtp_port = os.getenv("SMTP_PORT")
@@ -127,9 +127,11 @@ def send_email(weekend_id, document):
         s.starttls(context=context)     # Secure connection
         s.login(smtp_username, smtp_password)
         s.sendmail(msg['From'], msg['To'], msg.as_string())
-        logging.info("Email sent")
+        # TODO avoid sending logger as argument. Check after if email was sent?
+        logger.info("Email sent")
     except Exception as e:
-        logging.error(e)
+        # TODO 
+        logger.error(e)
     finally:
         s.quit()
     
@@ -137,7 +139,7 @@ def send_email(weekend_id, document):
 def main(request):
     logger = logging.getLogger("dev")
     logger.setLevel(logging.DEBUG)
-    WEEKEND = str(7)
+    WEEKEND = str(6)
     url1 = "http://competicio.fcvoleibol.cat/competiciones.asp?torneo=4253&jornada=" + WEEKEND
     page = requests.get(url1)
 
@@ -175,10 +177,13 @@ def main(request):
                     "RESULT-VISITANT": res_vis,
                     "SETS": sets}
         games.append(game_struct)
-    print("GAMES: ", games)
-    If all the results are empty we can finish here. Only dump when there
-    has been a result
+
+    # If all the results are empty we can finish here. Only dump when there
+    # has been a result
     if played_games == 0:
+        # TODO should I log this? It will be logged every 5 minutes before the
+        # first results have been played..
+        logger.info("There are no results for this weekend yet")
         return "204: No game results"
     
     # This is to format the document into a json format
@@ -203,7 +208,7 @@ def main(request):
     doc_ref = db.collection(u'games').document(weekend_id)
     restored_doc = doc_ref.get()
     if not restored_doc.exists:
-        logging.info("First event of this weekend has been found")
+        logger.info("First event of this weekend has been found")
         doc_ref.set(document)
         send_email(weekend_id, document)
 
@@ -213,10 +218,10 @@ def main(request):
         restored_dict = restored_doc.to_dict()
         are_equal = doc_comparison(restored_dict, document)
         if are_equal:
-            logging.info("No new games results were reported")
+            logger.info("No new games results were reported")
             return str(204)
         else:
             doc_ref.set(document)
-            logging.info("A new game result has been reported ")
+            logger.info("A new game result has been reported ")
             send_email(weekend_id, document)
     return str(200)
