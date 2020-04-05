@@ -5,15 +5,6 @@ import smtplib
 import ssl
 
 
-def get_credentials():
-    return {
-        "smtp_username": os.getenv("SMTP_USERNAME"),
-        "smtp_password": os.getenv("SMTP_PASSWORD"),
-        "smtp_port": os.getenv("SMTP_PORT"),
-        "smtp_host": os.getenv("SMTP_HOST"),
-        "smtp_to": os.getenv("SMTP_TO")
-        }
-
 def send_email(weekend, ref_url, document):
     """
     Sends email to users with document (game) content
@@ -57,6 +48,15 @@ def send_email(weekend, ref_url, document):
     finally:
         s.quit()
 
+
+def get_credentials():
+    return {
+        "smtp_username": os.getenv("SMTP_USERNAME"),
+        "smtp_password": os.getenv("SMTP_PASSWORD"),
+        "smtp_port": os.getenv("SMTP_PORT"),
+        "smtp_host": os.getenv("SMTP_HOST"),
+        "smtp_to": os.getenv("SMTP_TO")
+        }
 
 # TODO test text email and add results besides the link
 def text_msg(weekend, ref_url):
