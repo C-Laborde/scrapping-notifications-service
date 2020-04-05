@@ -9,7 +9,7 @@ from utils.send_email import send_email
 
 db = firestore.Client()
 
-TEST = True     # False to test real behaviour, True for forcing sending email
+TEST = False     # False to test real behaviour, True for forcing sending email
  
 def parse_res(res):
     res = res.replace(" ", "")
@@ -44,8 +44,8 @@ def doc_comparison(restored, document):
    
 
 def main(request):
-    logger = logging.getLogger("dev")
-    logger.setLevel(logging.DEBUG)
+    logging.basicConfig(level="INFO")
+    logger = logging.getLogger(__name__)
 
     weekend = str(6)
     url = "http://competicio.fcvoleibol.cat/competiciones.asp?torneo=4253&jornada=" + weekend
