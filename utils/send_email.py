@@ -52,8 +52,8 @@ def send_email(weekend, ref_url, document):
     # add it to the logs...
     # TODO when sending multiple emails, one can fail because of an incorrect
     # email address but others should be sent
-    # except Exception as e:
-    #     raise Exception
+    except Exception as e:
+        raise Exception
     finally:
         s.quit()
 
