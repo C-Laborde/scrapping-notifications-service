@@ -7,4 +7,3 @@ __pycache__/
 .vscode
 # notebooks are ignored. Jupytext scripts should be checked in instead.
 **/*.ipynb
-cron.yaml
