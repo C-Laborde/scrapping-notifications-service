@@ -59,10 +59,10 @@ def main(request):
 
 
     #### Next section is about getting the results new or not
-    soup1 = BeautifulSoup(page.content, 'html.parser')
+    soup = BeautifulSoup(page.content, 'html.parser')
 
     # Ideally there're 4 div. resultados (tables)
-    all_tables = soup1.select('div .resultados')
+    all_tables = soup.select('div .resultados')
     # TODO check if len of results is 4
 
     table = all_tables[1].select('tr')
