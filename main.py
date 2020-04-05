@@ -4,13 +4,13 @@ from google.cloud import firestore
 import json
 import logging
 import os, ssl
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+from utils.send_email import send_email
 
 
 db = firestore.Client()
 
+TEST = False     # False to test real behaviour, True for forcing sending email
+ 
 def parse_res(res):
     res = res.replace(" ", "")
     try:
@@ -41,107 +41,15 @@ def doc_comparison(restored, document):
         if results_restored != results_doc:
             return False
     return True
-
-def html_msg(weekend_nr, document):
-    return f"""\
-    <html>
-        <body>
-            <p>
-            Hola, <br> Hay nuevos resultados disponibles de la <//br>
-            <a href= "http://competicio.fcvoleibol.cat/competiciones.asp?torneo=4253&jornada=6"> jornada {weekend_nr} </a>
-            </p>
-            <div class="resultados">
-                <h3> RESULTATS D'AQUESTA JORNADA </h3>
-                <table width="800" border="0" align="center" cellpadding="2" cellspacing="2" class="tabla">
-                    <tbody>
-                        <tr class="tittr">
-                            <td width="30%" height="13" valign="top" bgcolor="#A9F5E1"> LOCAL </td>
-                            <td width="4%" valign="top" bgcolor="#A9F5E1"> RESUL </td>
-                            <td width="30%" valign="top" bgcolor="#A9F5E1"> VISITANT </td>
-                            <td width="36%" valign="top" bgcolor="#A9F5E1"> SETS </td>
-                        </tr>
-                        <tr>
-                            <td bgcolor="#81BEF7"> {document["GAME1"]["LOCAL"]} </td>
-                            <td bgcolor="#81BEF7" align="center"> {document["GAME1"]["RESULT-LOCAL"]} - {document["GAME1"]["RESULT-VISITANT"]} </td>
-                            <td bgcolor="#81BEF7"> {document["GAME1"]["VISITANT"]} </td>
-                            <td bgcolor="#81BEF7"> {document["GAME1"]["SETS"]} </td>
-                        </tr>
-                        <tr>
-                            <td bgcolor="#81DAF5"> {document["GAME2"]["LOCAL"]} </td>
-                            <td bgcolor="#81DAF5" align="center"> {document["GAME2"]["RESULT-LOCAL"]} - {document["GAME2"]["RESULT-VISITANT"]} </td>
-                            <td bgcolor="#81DAF5"> {document["GAME2"]["VISITANT"]} </td>
-                            <td bgcolor="#81DAF5"> {document["GAME2"]["SETS"]} </td>
-                        </tr>
-                        <tr>
-                            <td bgcolor="#81BEF7"> {document["GAME3"]["LOCAL"]} </td>
-                            <td bgcolor="#81BEF7" align="center"> {document["GAME3"]["RESULT-LOCAL"]} - {document["GAME3"]["RESULT-VISITANT"]} </td>
-                            <td bgcolor="#81BEF7"> {document["GAME3"]["VISITANT"]} </td>
-                            <td bgcolor="#81BEF7"> {document["GAME3"]["SETS"]} </td>
-                        </tr>
-                        <tr>
-                            <td bgcolor="#81DAF5"> {document["GAME4"]["LOCAL"]} </td>
-                            <td bgcolor="#81DAF5" align="center"> {document["GAME4"]["RESULT-LOCAL"]} - {document["GAME4"]["RESULT-VISITANT"]} </td>
-                            <td bgcolor="#81DAF5"> {document["GAME4"]["VISITANT"]} </td>
-                            <td bgcolor="#81DAF5"> {document["GAME4"]["SETS"]} </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>   
-        </body>
-    </html>
-    """
-
-def send_email(weekend_id, document, logger):
-    smtp_username = os.getenv("SMTP_USERNAME")
-    smtp_password = os.getenv("SMTP_PASSWORD")
-    smtp_port = os.getenv("SMTP_PORT")
-    smtp_host = os.getenv("SMTP_HOST")
-    smtp_to = os.getenv("SMTP_TO")
-
-    weekend_nr = weekend_id.split("WEEKEND")[1]
-    # TODO add text email
-    text = '\
-        Hay nuevos resultados disponibles de la jornada ' + weekend_nr
-    html = html_msg(weekend_nr, document)
-
-    # msg = MIMEText(text)
-    msg = MIMEMultipart("alternative")
-    msg['Subject'] = "FCVResultats jornada " + weekend_id
-    msg['From']    = smtp_username
-    msg['To']      = smtp_to
-
-    # Turn these into plain/html MIMEText objects
-    part1 = MIMEText(text, "plain")
-    part2 = MIMEText(html, "html")
-
-    # Add HTML/plain-text parts to MIMEMultipart message
-    # The email client will try to render the last part first
-    msg.attach(part1)
-    msg.attach(part2)
-
-    # Create a secure SSL context
-    context = ssl.create_default_context()
-    # Try to log in to server and send email
-    try:
-        s = smtplib.SMTP(smtp_host, smtp_port)
-        s.starttls(context=context)     # Secure connection
-        s.login(smtp_username, smtp_password)
-        s.sendmail(msg['From'], msg['To'], msg.as_string())
-        # TODO avoid sending logger as argument. Check after if email was sent?
-        logger.info("Email sent")
-    except Exception as e:
-        # TODO 
-        logger.error(e)
-    finally:
-        s.quit()
-    
+   
 
 def main(request):
-    logger = logging.getLogger("dev")
-    logger.setLevel(logging.DEBUG)
-    WEEKEND = str(6)
-    url1 = "http://competicio.fcvoleibol.cat/competiciones.asp?torneo=4253&jornada=" + WEEKEND
-    page = requests.get(url1)
+    logging.basicConfig(level="INFO")
+    logger = logging.getLogger(__name__)
+
+    weekend = str(6)
+    url = "http://competicio.fcvoleibol.cat/competiciones.asp?torneo=4253&jornada=" + weekend
+    page = requests.get(url)
 
     # TODO change this into try / error and service logs.
     if page.status_code == 200:
@@ -151,10 +59,10 @@ def main(request):
 
 
     #### Next section is about getting the results new or not
-    soup1 = BeautifulSoup(page.content, 'html.parser')
+    soup = BeautifulSoup(page.content, 'html.parser')
 
     # Ideally there're 4 div. resultados (tables)
-    all_tables = soup1.select('div .resultados')
+    all_tables = soup.select('div .resultados')
     # TODO check if len of results is 4
 
     table = all_tables[1].select('tr')
@@ -187,7 +95,7 @@ def main(request):
         return "204: No game results"
     
     # This is to format the document into a json format
-    weekend_id = "WEEKEND" + WEEKEND
+    weekend_id = "WEEKEND" + weekend
     names_parse = {"CEV L‘HOSPITALET 'B'": "CEV LHOSPITALET B",
                    "CLUB VÒLEI LA PALMA": "CLUB VOLEY LA PALMA",
                    "VÒLEI ELS ARCS": "VOLEY ELS ARCS",
@@ -198,10 +106,17 @@ def main(request):
                    "DSV CV SANT CUGAT 'D'": "DSV CV SANT CUGAT D"}
 
     document = {}
+    # TODO check that all values in dics have length 1
     for i, game in enumerate(games):
         document["GAME" + str(i + 1)] = {k: names_parse.get(v[0], v[0])
                                          for k, v in game.items()}
-    # TODO check that all values in dics have length 1
+    if TEST:
+        try:
+            send_email(weekend, url, document)
+            logger.info("Email sent succesfully")
+        except Exception as e:
+            logger.error(e)
+            raise Exception(e)
 
     # Now we should check for the same doc in the database.
     # If it doesn't exist: dump the doc and send email
@@ -210,7 +125,13 @@ def main(request):
     if not restored_doc.exists:
         logger.info("First event of this weekend has been found")
         doc_ref.set(document)
-        send_email(weekend_id, document)
+        # TODO I'm not sure if I'm handling the exceptions correctly
+        try:
+            send_email(weekend, url, document)
+            logger.info("Email sent succesfully")
+        except Exception as e:
+            logger.error(e)
+            raise Exception(e)
 
     # It it exists: load it and compare
     else: 
@@ -223,5 +144,10 @@ def main(request):
         else:
             doc_ref.set(document)
             logger.info("A new game result has been reported ")
-            send_email(weekend_id, document)
+            try:
+                send_email(weekend, url, document)
+                logger.info("Email sent succesfully")
+            except Exception as e:
+                logger.error(e)
+                raise Exception(e)
     return str(200)
