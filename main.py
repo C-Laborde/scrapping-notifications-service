@@ -9,6 +9,8 @@ from utils.send_email import send_email
 
 db = firestore.Client()
 
+TEST = True     # False to test real behaviour, True for forcing sending email
+ 
 def parse_res(res):
     res = res.replace(" ", "")
     try:
@@ -44,9 +46,10 @@ def doc_comparison(restored, document):
 def main(request):
     logger = logging.getLogger("dev")
     logger.setLevel(logging.DEBUG)
-    WEEKEND = str(6)
-    url1 = "http://competicio.fcvoleibol.cat/competiciones.asp?torneo=4253&jornada=" + WEEKEND
-    page = requests.get(url1)
+
+    weekend = str(6)
+    url = "http://competicio.fcvoleibol.cat/competiciones.asp?torneo=4253&jornada=" + weekend
+    page = requests.get(url)
 
     # TODO change this into try / error and service logs.
     if page.status_code == 200:
@@ -92,7 +95,7 @@ def main(request):
         return "204: No game results"
     
     # This is to format the document into a json format
-    weekend_id = "WEEKEND" + WEEKEND
+    weekend_id = "WEEKEND" + weekend
     names_parse = {"CEV L‘HOSPITALET 'B'": "CEV LHOSPITALET B",
                    "CLUB VÒLEI LA PALMA": "CLUB VOLEY LA PALMA",
                    "VÒLEI ELS ARCS": "VOLEY ELS ARCS",
@@ -103,11 +106,18 @@ def main(request):
                    "DSV CV SANT CUGAT 'D'": "DSV CV SANT CUGAT D"}
 
     document = {}
+    # TODO check that all values in dics have length 1
     for i, game in enumerate(games):
         document["GAME" + str(i + 1)] = {k: names_parse.get(v[0], v[0])
                                          for k, v in game.items()}
-    # TODO check that all values in dics have length 1
-    send_email(weekend_id, document, logger)
+    if TEST:
+        try:
+            send_email(weekend, url, document)
+            logger.info("Email sent succesfully")
+        except Exception as e:
+            logger.error(e)
+            raise Exception(e)
+
     # Now we should check for the same doc in the database.
     # If it doesn't exist: dump the doc and send email
     doc_ref = db.collection(u'games').document(weekend_id)
@@ -115,7 +125,13 @@ def main(request):
     if not restored_doc.exists:
         logger.info("First event of this weekend has been found")
         doc_ref.set(document)
-        send_email(weekend_id, document)
+        # TODO I'm not sure if I'm handling the exceptions correctly
+        try:
+            send_email(weekend, url, document)
+            logger.info("Email sent succesfully")
+        except Exception as e:
+            logger.error(e)
+            raise Exception(e)
 
     # It it exists: load it and compare
     else: 
@@ -128,5 +144,10 @@ def main(request):
         else:
             doc_ref.set(document)
             logger.info("A new game result has been reported ")
-            send_email(weekend_id, document)
+            try:
+                send_email(weekend, url, document)
+                logger.info("Email sent succesfully")
+            except Exception as e:
+                logger.error(e)
+                raise Exception(e)
     return str(200)
