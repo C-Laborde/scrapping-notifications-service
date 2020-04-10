@@ -1,122 +1,45 @@
-import requests
-from bs4 import BeautifulSoup
 from google.cloud import firestore
 import logging
+from utils.comparison import doc_comparison
+from utils.formatting import games_to_doc
+from utils.scrapping import get_results
 from utils.send_email import send_email
 
 
 db = firestore.Client()
 
-TEST = False     # False to test real behaviour, True for forcing sending email
-
-
-def parse_res(res):
-    res = res.replace(" ", "")
-    try:
-        res_loc = res.split("-")[0]
-        res_vis = res.split("-")[1]
-        played = 1
-    except IndexError:
-        res_loc = "-"
-        res_vis = "-"
-        played = 0
-    return res_loc, res_vis, played
-
-
-def parse_sets(sets):
-    if len(sets) > 0:
-        return sets
-    else:
-        return "-"
-
-
-def doc_comparison(restored, document):
-    if not sorted(restored.keys()) == sorted(document.keys()):
-        print("RESTORED KEYS: ", restored.keys())
-        print("DOCUMENT KEYS: ", document.keys())
-        raise KeyError("Documents have different keys")
-    for game in restored.keys():
-        results_restored = [restored[game]["RESULT-LOCAL"],
-                            restored[game]["RESULT-VISITANT"]]
-        results_doc = [document[game]["RESULT-LOCAL"],
-                       document[game]["RESULT-VISITANT"]]
-        if results_restored != results_doc:
-            return False
-    return True
+TEST = True     # False to test real behaviour, True for forcing sending email
 
 
 def main(request):
     logging.basicConfig(level="INFO")
     logger = logging.getLogger(__name__)
 
+    # TODO add loggers
+    # TODO get url and weekend from db
     weekend = str(6)
     url = "http://competicio.fcvoleibol.cat/competiciones.asp?torneo=4253&jornada=" + weekend
-    page = requests.get(url)
 
-    # TODO change this into try / error and service logs.
-    if page.status_code == 200:
-        print("Page status code: %s Download correct" % page.status_code)
-    else:
-        print("Page status code: %s Error downloading" % page.status_code)
-
-
-    #### Next section is about getting the results new or not
-    soup = BeautifulSoup(page.content, 'html.parser')
-
-    # Ideally there're 4 div. resultados (tables)
-    all_tables = soup.select('div .resultados')
-    # TODO check if len of results is 4
-
-    table = all_tables[1].select('tr')
-    # TODO use columns names to check if right table
-    # TODO check if len(useful_results is 5, the table has 5 rows)
-
-    games = []
-    played_games = 0
-    # The first row are the columns labels, games details start on the 2nd row
-    for i in range(1, len(table)):
-        game = table[i]
-        game_components = game.find_all('td')
-        res = game_components[1].contents
-        res_loc, res_vis, played = parse_res(res[0])
-        played_games += played
-        sets = parse_sets(game_components[3].contents)
-        game_struct = {
-            "LOCAL": game_components[0].find('a',
-                                             class_='discreto').contents,
-            "VISITANT": game_components[2].find('a',
-                                                class_='discreto').contents,
-            "RESULT-LOCAL": res_loc,
-            "RESULT-VISITANT": res_vis,
-            "SETS": sets}
-        games.append(game_struct)
+    games_played, games = get_results(url)
 
     # If all the results are empty we can finish here. Only dump when there
     # has been a result
-    if played_games == 0:
+    if games_played == 0:
         # TODO should I log this? It will be logged every 5 minutes before the
         # first results have been played..
         logger.info("There are no results for this weekend yet")
         return "204: No game results"
 
+    # OBS I could check just the number of games played and compare it with
+    # the value in the db instead of comparing the full doc, but it's less
+    # robust
     # This is to format the document into a json format
+    document = games_to_doc(games)
     weekend_id = "WEEKEND" + weekend
-    names_parse = {"CEV L‘HOSPITALET 'B'": "CEV LHOSPITALET B",
-                   "CLUB VÒLEI LA PALMA": "CLUB VOLEY LA PALMA",
-                   "VÒLEI ELS ARCS": "VOLEY ELS ARCS",
-                   "CV TORELLÓ": "CV TORELLO",
-                   "AEE ELISABETH SALOU": "AEE ELISABETH SALOU",
-                   "OPTICALIA CV VILANOVA GROC": "OPTICALIA CV VILANOVA GROC",
-                   "IGUALADA VÒLEI CLUB": "IGUALADA VOLEI CLUB",
-                   "DSV CV SANT CUGAT 'D'": "DSV CV SANT CUGAT D"}
 
-    document = {}
-    # TODO check that all values in dics have length 1
-    for i, game in enumerate(games):
-        document["GAME" + str(i + 1)] = {k: names_parse.get(v[0], v[0])
-                                         for k, v in game.items()}
     if TEST:
         try:
+            print("DOC", document)
             send_email(weekend, url, document)
             logger.info("Email sent succesfully")
         except Exception as e:
