@@ -15,8 +15,8 @@ def send_email(weekend, ref_url, document):
     # Creation of email object
     msg = MIMEMultipart("alternative")
     msg['Subject'] = "FCVResultats jornada " + weekend
-    msg['From']    = creds["smtp_username"]
-    msg['To']      = creds["smtp_to"]
+    msg['From'] = creds["smtp_username"]
+    msg['To'] = creds["smtp_to"]
 
     # Email content
     text = text_msg(weekend, document)
@@ -43,7 +43,7 @@ def send_email(weekend, ref_url, document):
     # add it to the logs...
     # TODO when sending multiple emails, one can fail because of an incorrect
     # email address but others should be sent
-    except Exception as e:
+    except Exception:
         raise Exception
     finally:
         s.quit()
@@ -58,11 +58,13 @@ def get_credentials():
         "smtp_to": os.getenv("SMTP_TO")
         }
 
+
 # TODO test text email and add results besides the link
 def text_msg(weekend, ref_url):
     return f"\
         Hay nuevos resultados disponibles de la jornada {weekend}\
         Puedes verlos en este link: {ref_url}"
+
 
 def html_msg(weekend, ref_url, document):
     # TODO add string so repeated emails content is not hide by gmail

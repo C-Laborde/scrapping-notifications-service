@@ -1,16 +1,15 @@
 import requests
 from bs4 import BeautifulSoup
 from google.cloud import firestore
-import json
 import logging
-import os, ssl
 from utils.send_email import send_email
 
 
 db = firestore.Client()
 
 TEST = False     # False to test real behaviour, True for forcing sending email
- 
+
+
 def parse_res(res):
     res = res.replace(" ", "")
     try:
@@ -23,25 +22,28 @@ def parse_res(res):
         played = 0
     return res_loc, res_vis, played
 
+
 def parse_sets(sets):
     if len(sets) > 0:
         return sets
     else:
         return "-"
 
+
 def doc_comparison(restored, document):
     if not sorted(restored.keys()) == sorted(document.keys()):
         print("RESTORED KEYS: ", restored.keys())
         print("DOCUMENT KEYS: ", document.keys())
         raise KeyError("Documents have different keys")
-    equal = True
     for game in restored.keys():
-        results_restored = [restored[game]["RESULT-LOCAL"], restored[game]["RESULT-VISITANT"]]
-        results_doc = [document[game]["RESULT-LOCAL"], document[game]["RESULT-VISITANT"]]
+        results_restored = [restored[game]["RESULT-LOCAL"],
+                            restored[game]["RESULT-VISITANT"]]
+        results_doc = [document[game]["RESULT-LOCAL"],
+                       document[game]["RESULT-VISITANT"]]
         if results_restored != results_doc:
             return False
     return True
-   
+
 
 def main(request):
     logging.basicConfig(level="INFO")
@@ -71,7 +73,7 @@ def main(request):
 
     games = []
     played_games = 0
-    # The first row are the columns labels, games details start on the second row
+    # The first row are the columns labels, games details start on the 2nd row
     for i in range(1, len(table)):
         game = table[i]
         game_components = game.find_all('td')
@@ -79,11 +81,14 @@ def main(request):
         res_loc, res_vis, played = parse_res(res[0])
         played_games += played
         sets = parse_sets(game_components[3].contents)
-        game_struct = {"LOCAL": game_components[0].find('a', class_='discreto').contents,
-                    "VISITANT": game_components[2].find('a', class_='discreto').contents,
-                    "RESULT-LOCAL": res_loc,
-                    "RESULT-VISITANT": res_vis,
-                    "SETS": sets}
+        game_struct = {
+            "LOCAL": game_components[0].find('a',
+                                             class_='discreto').contents,
+            "VISITANT": game_components[2].find('a',
+                                                class_='discreto').contents,
+            "RESULT-LOCAL": res_loc,
+            "RESULT-VISITANT": res_vis,
+            "SETS": sets}
         games.append(game_struct)
 
     # If all the results are empty we can finish here. Only dump when there
@@ -93,7 +98,7 @@ def main(request):
         # first results have been played..
         logger.info("There are no results for this weekend yet")
         return "204: No game results"
-    
+
     # This is to format the document into a json format
     weekend_id = "WEEKEND" + weekend
     names_parse = {"CEV L‘HOSPITALET 'B'": "CEV LHOSPITALET B",
@@ -134,7 +139,7 @@ def main(request):
             raise Exception(e)
 
     # It it exists: load it and compare
-    else: 
+    else:
         # TODO compare restored_doc with document. Be carefull with N and None
         restored_dict = restored_doc.to_dict()
         are_equal = doc_comparison(restored_dict, document)
