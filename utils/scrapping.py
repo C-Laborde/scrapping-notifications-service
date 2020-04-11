@@ -5,6 +5,12 @@ from .parsing import parse_res, parse_sets
 
 
 def get_results(url):
+    """
+    Scraps the target url to get the games results that have been uploaded.
+    Returns the number of games for which there're results available and the
+    corresponding results
+    url = string, url to parse
+    """
     page = requests.get(url)
 
     # TODO change this into try / error and service logs.

@@ -8,6 +8,9 @@ import ssl
 def send_email(weekend, ref_url, document):
     """
     Sends email to users with document (game) content
+    weekend = int, weekend nr
+    ref_url = string, url to include in email for the user to go
+    document = dictionary, the games information to include in email
     """
     # Email config is obtained from environment vars
     creds = get_credentials()

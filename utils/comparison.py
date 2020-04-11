@@ -1,4 +1,10 @@
 def doc_comparison(restored, document):
+    """
+    Compares two documents with games results and returns a boolean saying
+    if they're equal or not
+    restored = dictionary, document restored from db
+    document = dictionary, document created from website parsing
+    """
     if not sorted(restored.keys()) == sorted(document.keys()):
         print("RESTORED KEYS: ", restored.keys())
         print("DOCUMENT KEYS: ", document.keys())

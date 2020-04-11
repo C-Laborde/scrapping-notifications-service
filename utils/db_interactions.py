@@ -5,7 +5,16 @@ from .send_email import send_email
 db = firestore.Client()
 
 
+# TODO could this functionality be further splitted?
 def compare_and_send(document, weekend, logger, url):
+    """
+    Depending on the document contents and what has been stored in the db
+    already, decides if an email should be sent to the users or not
+    document = dictionary with games details
+    weekend = int, weekend nr
+    logger = logging object
+    url = url required for email href content
+    """
     # If it doesn't exist: dump the doc and send email
     weekend_id = "WEEKEND" + weekend
     doc_ref = db.collection(u'games').document(weekend_id)
@@ -36,6 +45,7 @@ def compare_and_send(document, weekend, logger, url):
             try:
                 send_email(weekend, url, document)
                 logger.info("Email sent succesfully")
+                # TODO should I return something here?
             except Exception as e:
                 logger.error(e)
                 raise Exception(e)

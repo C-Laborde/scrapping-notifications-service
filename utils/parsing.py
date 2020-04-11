@@ -1,4 +1,8 @@
 def parse_res(res):
+    """
+    Parses the results string (res) to get the number of sets won per team
+    res =  string
+    """
     res = res.replace(" ", "")
     try:
         res_loc = res.split("-")[0]
@@ -12,6 +16,10 @@ def parse_res(res):
 
 
 def parse_sets(sets):
+    """
+    Parses the sets string
+    res =  string
+    """
     if len(sets) > 0:
         return sets
     else:

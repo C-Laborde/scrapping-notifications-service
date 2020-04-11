@@ -17,10 +17,11 @@ def main(request):
     weekend = str(6)
     url = "http://competicio.fcvoleibol.cat/competiciones.asp?torneo=4253&jornada=" + weekend
 
+    # Parse games results from website
     games_played, games = get_results(url)
 
     # If all the results are empty we can finish here. Only dump when there
-    # has been a result
+    # has been a first result
     if games_played == 0:
         # TODO should I log this? It will be logged every 5 minutes before the
         # first results have been played..
@@ -30,6 +31,7 @@ def main(request):
     # This is to format the document into a json format
     document = games_to_doc(games)
 
+    # TODO remove this from deployment, useful only for local testing
     if TEST:
         try:
             print("DOC", document)
@@ -39,6 +41,7 @@ def main(request):
             logger.error(e)
             raise Exception(e)
 
-    # Now we should check for the same doc in the database.
+    # Now we should check for the same doc in the database and decide if
+    # an email should be sent accordingly
     compare_and_send(document, weekend, logger, url)
     return str(200)
