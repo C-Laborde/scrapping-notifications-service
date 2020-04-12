@@ -9,6 +9,7 @@ TEST = False     # False to test real behaviour, True for forcing sending email
 
 
 def main(request):
+    # TODO refactor into a class
     logging.basicConfig(level="INFO")
     logger = logging.getLogger(__name__)
 
@@ -18,7 +19,7 @@ def main(request):
     url = "http://competicio.fcvoleibol.cat/competiciones.asp?torneo=4253&jornada=" + weekend
 
     # Parse games results from website
-    games_played, games = get_results(url)
+    games_played, games = get_results(url, logger)
 
     # If all the results are empty we can finish here. Only dump when there
     # has been a first result

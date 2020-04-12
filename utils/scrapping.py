@@ -4,7 +4,7 @@ import requests
 from .parsing import parse_res, parse_sets
 
 
-def get_results(url):
+def get_results(url, logger):
     """
     Scraps the target url to get the games results that have been uploaded.
     Returns the number of games for which there're results available and the
@@ -17,28 +17,37 @@ def get_results(url):
     if page.status_code == 200:
         print("Page status code: %s Download correct" % page.status_code)
     else:
-        print("Page status code: %s Error downloading" % page.status_code)
+        logger.error(f"Page status code: {page.status_code} ")
 
     # ### Next section is about getting the results new or not
-    soup = BeautifulSoup(page.content, 'html.parser')
+    site = BeautifulSoup(page.content, 'html.parser')
 
-    # Ideally there're 4 div. resultados (tables)
-    all_tables = soup.select('div .resultados')
-    # TODO check if len of results is 4
+    # In theory there're 4 tables as div. resultados
+    all_tables = site.select('div .resultados')
+    if len(all_tables) != 4:
+        logger.warning("Results table length is not 4. There might have " +
+                       "been a problem during parsing")
 
+    # The second table is the one with useful results
     table = all_tables[1].select('tr')
-    # TODO use columns names to check if right table
-    # TODO check if len(useful_results is 5, the table has 5 rows)
+
+    # We check if we parsed the right table
+    table_ok = validate_table(table)
+    if not table_ok:
+        logger.warning("It seems we might have parsed the wrong table")
 
     games = []
     games_played = 0
     # The first row are the columns labels, games details start on the 2nd row
+    # We iterate over the rows (games) to parse the results per game
     for i in range(1, len(table)):
-        game = table[i]
-        game_components = game.find_all('td')
+        # Game components are local, results, visitant and sets
+        game_components = table[i].find_all('td')
+        # Game result
         res = game_components[1].contents
         res_loc, res_vis, played = parse_res(res[0])
         games_played += played
+        # Game sets
         sets = parse_sets(game_components[3].contents)
         game_struct = {
             "LOCAL": game_components[0].find('a',
@@ -51,3 +60,15 @@ def get_results(url):
         games.append(game_struct)
 
     return games_played, games
+
+
+def validate_table(table):
+    """
+    Checks if the right results table is being parsed by checking the table
+    length and the column names. Returns a boolean.
+    table = list
+    """
+    first_row = table[0].find_all("td")
+    columns_names = [col.contents[0].strip() for col in first_row]
+    target_names = ["LOCAL", "RESUL.", "VISITANT", "SETS"]
+    return (target_names == columns_names) and (len(table) == 5)
