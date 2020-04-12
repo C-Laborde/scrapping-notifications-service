@@ -1,6 +1,7 @@
 def parse_res(res):
     """
-    Parses the results string (res) to get the number of sets won per team
+    Parses the results string (res) to check if the results have been uploaded
+    (played = 1) and, if so, to get the number of sets won per team
     res =  string
     """
     res = res.replace(" ", "")
