@@ -1,12 +1,12 @@
 from google.cloud import firestore
 from utils.comparison import doc_comparison
-from .send_email import send_email
+# from .send_email import send_email
 
 db = firestore.Client()
 
 
 # TODO could this functionality be further splitted?
-def compare_and_send(document, weekend, logger, url):
+def compare_and_send(document, weekend, logger, url, email_service):
     """
     Depending on the document contents and what has been stored in the db
     already, decides if an email should be sent to the users or not
@@ -24,7 +24,7 @@ def compare_and_send(document, weekend, logger, url):
         doc_ref.set(document)
         # TODO I'm not sure if I'm handling the exceptions correctly
         try:
-            send_email(weekend, url, document)
+            email_service.send_email(weekend, url, document)
             logger.info("Email sent succesfully")
         except Exception as e:
             logger.error(e)
@@ -43,7 +43,7 @@ def compare_and_send(document, weekend, logger, url):
             doc_ref.set(document)
             logger.info("A new game result has been reported ")
             try:
-                send_email(weekend, url, document)
+                email_service.send_email(weekend, url, document)
                 logger.info("Email sent succesfully")
                 # TODO should I return something here?
             except Exception as e:
