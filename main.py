@@ -1,4 +1,6 @@
 import logging
+from cls.email_service import EmailService
+from cls.logger import Logger
 from utils.db_interactions import compare_and_send
 from utils.formatting import games_to_doc
 from utils.scrapping import get_results
@@ -9,9 +11,9 @@ TEST = False     # False to test real behaviour, True for forcing sending email
 
 
 def main(request):
-    # TODO refactor into a class
-    logging.basicConfig(level="INFO")
-    logger = logging.getLogger(__name__)
+    log = Logger()
+    logger = log.logger
+    email_service = EmailService()
 
     # TODO get url and weekend from db
     weekend = str(6)
@@ -37,8 +39,8 @@ def main(request):
     # TODO remove this from deployment, useful only for local testing
     if TEST:
         try:
-            print("DOC", document)
-            send_email(weekend, url, document)
+            logger.info("TESTING sending email")
+            email_service.send_email(weekend, url, document)
             logger.info("Email sent succesfully")
         except Exception as e:
             logger.error(e)
