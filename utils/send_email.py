@@ -8,15 +8,20 @@ import ssl
 def send_email(weekend, ref_url, document):
     """
     Sends email to users with document (game) content
+    weekend = int, weekend nr
+    ref_url = string, url to include in email for the user to go
+    document = dictionary, the games information to include in email
     """
     # Email config is obtained from environment vars
     creds = get_credentials()
 
     # Creation of email object
     msg = MIMEMultipart("alternative")
+    # TODO retrieve the subject from some email config
     msg['Subject'] = "FCVResultats jornada " + weekend
-    msg['From']    = creds["smtp_username"]
-    msg['To']      = creds["smtp_to"]
+    msg['From'] = creds["smtp_username"]
+    # TODO this will be queried from db
+    msg['To'] = creds["smtp_to"]
 
     # Email content
     text = text_msg(weekend, document)
@@ -43,7 +48,7 @@ def send_email(weekend, ref_url, document):
     # add it to the logs...
     # TODO when sending multiple emails, one can fail because of an incorrect
     # email address but others should be sent
-    except Exception as e:
+    except Exception:
         raise Exception
     finally:
         s.quit()
@@ -58,11 +63,13 @@ def get_credentials():
         "smtp_to": os.getenv("SMTP_TO")
         }
 
+
 # TODO test text email and add results besides the link
 def text_msg(weekend, ref_url):
     return f"\
         Hay nuevos resultados disponibles de la jornada {weekend}\
         Puedes verlos en este link: {ref_url}"
+
 
 def html_msg(weekend, ref_url, document):
     # TODO add string so repeated emails content is not hide by gmail
