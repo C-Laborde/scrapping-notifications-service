@@ -1,6 +1,7 @@
 import logging
 from cls.email_service import EmailService
 from cls.logger import Logger
+from cls.scrapper import Results
 from utils.db_interactions import compare_and_send
 from utils.formatting import games_to_doc
 from utils.scrapping import get_results
@@ -19,9 +20,12 @@ def main(request):
     weekend = str(6)
     url = "http://competicio.fcvoleibol.cat/competiciones.asp?torneo=4253&jornada=" + weekend
 
+    results = Results(url, logger)
+
     # Parse games results from website
     logger.info("Parsing website")
-    games_played, games = get_results(url, logger)
+    results.get_results()
+    games_played, games = results.games_played, results.games
     logger.info("Results correctly parsed")
 
     logger.info("Results are analized now:")
@@ -50,6 +54,6 @@ def main(request):
                 " results")
     # Now we should check for the same doc in the database and decide if
     # an email should be sent accordingly
-    compare_and_send(document, weekend, logger, url)
+    compare_and_send(document, weekend, logger, url, email_service)
     logger.info("Finished")
     return str(200)
