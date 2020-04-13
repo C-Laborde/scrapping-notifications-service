@@ -11,7 +11,7 @@ def games_to_doc(games):
         names_parse = json.load(f)
 
     document = {}
-    # TODO check that all values in dics have length 1
+    # TODO check doc integrity
     for i, game in enumerate(games):
         document["GAME" + str(i + 1)] = {k: names_parse.get(v[0], v[0])
                                          for k, v in game.items()}

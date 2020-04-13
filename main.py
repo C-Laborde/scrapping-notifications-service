@@ -13,14 +13,16 @@ def main(request):
     logging.basicConfig(level="INFO")
     logger = logging.getLogger(__name__)
 
-    # TODO add loggers
     # TODO get url and weekend from db
     weekend = str(6)
     url = "http://competicio.fcvoleibol.cat/competiciones.asp?torneo=4253&jornada=" + weekend
 
     # Parse games results from website
+    logger.info("Parsing website")
     games_played, games = get_results(url, logger)
+    logger.info("Results correctly parsed")
 
+    logger.info("Results are analized now:")
     # If all the results are empty we can finish here. Only dump when there
     # has been a first result
     if games_played == 0:
@@ -42,7 +44,10 @@ def main(request):
             logger.error(e)
             raise Exception(e)
 
+    logger.info("There are results available. We compare them with previous" +
+                " results")
     # Now we should check for the same doc in the database and decide if
     # an email should be sent accordingly
     compare_and_send(document, weekend, logger, url)
+    logger.info("Finished")
     return str(200)

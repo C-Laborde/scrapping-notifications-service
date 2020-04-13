@@ -15,7 +15,7 @@ def get_results(url, logger):
 
     # TODO change this into try / error and service logs.
     if page.status_code == 200:
-        print("Page status code: %s Download correct" % page.status_code)
+        logger.info(f"Page status code: {page.status_code} Download correct")
     else:
         logger.error(f"Page status code: {page.status_code} ")
 
@@ -27,6 +27,7 @@ def get_results(url, logger):
     if len(all_tables) != 4:
         logger.warning("Results table length is not 4. There might have " +
                        "been a problem during parsing")
+        # TODO send an email to me if that's the case
 
     # The second table is the one with useful results
     table = all_tables[1].select('tr')
@@ -35,6 +36,7 @@ def get_results(url, logger):
     table_ok = validate_table(table)
     if not table_ok:
         logger.warning("It seems we might have parsed the wrong table")
+        # TODO send an email to me if that's the case
 
     games = []
     games_played = 0

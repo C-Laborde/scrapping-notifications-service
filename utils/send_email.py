@@ -17,8 +17,10 @@ def send_email(weekend, ref_url, document):
 
     # Creation of email object
     msg = MIMEMultipart("alternative")
+    # TODO retrieve the subject from some email config
     msg['Subject'] = "FCVResultats jornada " + weekend
     msg['From'] = creds["smtp_username"]
+    # TODO this will be queried from db
     msg['To'] = creds["smtp_to"]
 
     # Email content
