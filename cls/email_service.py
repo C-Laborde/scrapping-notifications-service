@@ -66,6 +66,7 @@ class EmailService:
         # finally:
         #     self.s.quit()
         for email in recipients:
+            print("EMAIL", email)
             msg['To'] = email
             try:
                 self.s.sendmail(msg['From'], msg['To'], msg.as_string())
@@ -74,9 +75,9 @@ class EmailService:
             # TODO when sending multiple emails, one can fail because of an
             # incorrect email address but others should be sent
             except Exception:
-                raise Exception
-            finally:
                 self.s.quit()
+                raise Exception
+        self.s.quit()
 
 
 # TODO test text email and add results besides the link
