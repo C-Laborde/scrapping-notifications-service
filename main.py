@@ -9,7 +9,7 @@ from utils.formatting import games_to_doc
 # from utils.send_email import send_email
 
 
-TEST = True     # False to test real behaviour, True for forcing sending email
+TEST = False     # False to test real behaviour, True for forcing sending email
 
 
 def main(request):
@@ -25,8 +25,10 @@ def main(request):
         root_urls[i].append(root_urls[i][0] + weekend)
 
     for url_details in root_urls:
+        teams = db.get_teams(url_details[0])
         url_id = url_details[1]
         url = url_details[2]
+        print("TEAMS", teams)
         results = Results(url, logger)
 
         # Parse games results from website
@@ -45,13 +47,14 @@ def main(request):
             return "204: No game results"
 
         # This is to format the document into a json format
+        # TODO add timestamp to doc
         document = games_to_doc(games)
 
         # TODO remove this from deployment, useful only for local testing
         if TEST:
             try:
                 logger.info("TESTING sending email")
-                email_service.send_email(weekend, url, document)
+                email_service.send_email(weekend, url, document, teams)
                 logger.info("Email sent succesfully")
             except Exception as e:
                 logger.error(e)
@@ -61,6 +64,6 @@ def main(request):
                     " results")
         # Now we should check for the same doc in the database and decide if
         # an email should be sent accordingly
-        db.compare_and_send(document, url_id, weekend, logger, url, email_service)
+        db.compare_and_send(document, url_id, weekend, logger, url, email_service, teams)
         logger.info("Finished")
     return str(200)
