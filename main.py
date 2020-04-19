@@ -9,7 +9,7 @@ from utils.formatting import games_to_doc
 # from utils.send_email import send_email
 
 
-TEST = False     # False to test real behaviour, True for forcing sending email
+TEST = True     # False to test real behaviour, True for forcing sending email
 
 
 def main(request):
@@ -19,13 +19,14 @@ def main(request):
     db = DBManager()
 
     # TODO get url and weekend from db
-    root_urls = db.get_teams()
+    root_urls = db.get_urls()
     weekend = str(6)
-    urls = []
-    for url in root_urls:
-        urls.append(url + weekend)
+    for i in range(len(root_urls)):
+        root_urls[i].append(root_urls[i][0] + weekend)
 
-    for url in urls:
+    for url_details in root_urls:
+        url_id = url_details[1]
+        url = url_details[2]
         results = Results(url, logger)
 
         # Parse games results from website
@@ -60,6 +61,6 @@ def main(request):
                     " results")
         # Now we should check for the same doc in the database and decide if
         # an email should be sent accordingly
-        db.compare_and_send(document, weekend, logger, url, email_service)
+        db.compare_and_send(document, url_id, weekend, logger, url, email_service)
         logger.info("Finished")
     return str(200)
