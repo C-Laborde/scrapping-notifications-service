@@ -28,14 +28,13 @@ class EmailService:
         except Exception:
             raise Exception
 
-    def get_destinations(self):
-        # TODO We will need to filter by teams/url
+    def get_destinations(self, teams):
         # TODO Optimize the query with a projection
-        docs = db.collection(u'users').stream()
+        docs = db.collection(u'users').where(u'team', u'in', teams).stream()
         emails = [doc.to_dict()["email"] for doc in docs]
         self.emails = emails
 
-    def send_email(self, weekend, ref_url, document):
+    def send_email(self, weekend, ref_url, document, teams):
         # Creation of email object
         msg = MIMEMultipart("alternative")
         # TODO retrieve the subject from some email config
@@ -54,7 +53,7 @@ class EmailService:
         msg.attach(part1)
         msg.attach(part2)
         # TODO add unsuscribe in email
-        self.get_destinations()
+        self.get_destinations(teams)
         recipients = self.emails
         # TODO this works to send email to multiple persons but the email
         # addresses are not hidden
@@ -66,7 +65,6 @@ class EmailService:
         # finally:
         #     self.s.quit()
         for email in recipients:
-            print("EMAIL", email)
             msg['To'] = email
             try:
                 self.s.sendmail(msg['From'], msg['To'], msg.as_string())

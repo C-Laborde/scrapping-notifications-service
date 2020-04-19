@@ -21,7 +21,15 @@ class DBManager:
         self.urls = urls
         return urls
 
-    def compare_and_send(self, document, url_id, weekend, logger, url, email_service):
+    def get_teams(self, url):
+        print("URL", url)
+        docs = self.db.collection(u'teams').where(u'root_url',
+                                                  u'==', url).stream()
+        teams = [doc.to_dict()["team"] for doc in docs]
+        return teams
+
+    def compare_and_send(self, document, url_id, weekend, logger, url,
+                         email_service, teams):
         """
         Depending on the document contents and what has been stored in the db
         already, decides if an email should be sent to the users or not
@@ -33,6 +41,7 @@ class DBManager:
         # If it doesn't exist: dump the doc and send email
         weekend_id = "WEEKEND" + weekend
         # doc_ref = self.db.collection(u'games').document(weekend_id)
+        # TODO the url collection needs to be created already
         doc_ref = self.db.collection(u'games').document(url_id).collection(u'games').document(weekend_id)
         restored_doc = doc_ref.get()
         if not restored_doc.exists:
@@ -40,7 +49,7 @@ class DBManager:
             doc_ref.set(document)
             # TODO I'm not sure if I'm handling the exceptions correctly
             try:
-                email_service.send_email(weekend, url, document)
+                email_service.send_email(weekend, url, document, teams)
                 logger.info("Email sent succesfully")
             except Exception as e:
                 logger.error(e)
@@ -59,7 +68,7 @@ class DBManager:
                 doc_ref.set(document)
                 logger.info("A new game result has been reported ")
                 try:
-                    email_service.send_email(weekend, url, document)
+                    email_service.send_email(weekend, url, document, teams)
                     logger.info("Email sent succesfully")
                     # TODO should I return something here?
                 except Exception as e:
