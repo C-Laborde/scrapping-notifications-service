@@ -9,9 +9,6 @@ class DBManager:
     def get_urls(self):
         docs = self.db.collection(u'teams').where(u'followers',
                                                   u'>', 0).stream()
-        # self.teams = {doc.to_dict() for doc in docs}
-        # urls = set([[doc.to_dict()["root_url"], doc.to_dict()["root_url_id"]]
-        #             for doc in docs])
         urls = []
         for doc in docs:
             doc = doc.to_dict()
