@@ -6,14 +6,22 @@ class DBManager:
     def __init__(self):
         self.db = firestore.Client()
 
-    def get_teams(self):
+    def get_urls(self):
         docs = self.db.collection(u'teams').where(u'followers',
                                                   u'>', 0).stream()
         # self.teams = {doc.to_dict() for doc in docs}
-        self.urls = [doc.to_dict()["root_url"] for doc in docs]
-        return self.urls
+        # urls = set([[doc.to_dict()["root_url"], doc.to_dict()["root_url_id"]]
+        #             for doc in docs])
+        urls = []
+        for doc in docs:
+            doc = doc.to_dict()
+            info = [doc["root_url"], doc["root_url_id"]]
+            if info not in urls:
+                urls.append(info)
+        self.urls = urls
+        return urls
 
-    def compare_and_send(self, document, weekend, logger, url, email_service):
+    def compare_and_send(self, document, url_id, weekend, logger, url, email_service):
         """
         Depending on the document contents and what has been stored in the db
         already, decides if an email should be sent to the users or not
@@ -24,7 +32,8 @@ class DBManager:
         """
         # If it doesn't exist: dump the doc and send email
         weekend_id = "WEEKEND" + weekend
-        doc_ref = self.db.collection(u'games').document(weekend_id)
+        # doc_ref = self.db.collection(u'games').document(weekend_id)
+        doc_ref = self.db.collection(u'games').document(url_id).collection(u'games').document(weekend_id)
         restored_doc = doc_ref.get()
         if not restored_doc.exists:
             logger.info("First event of this weekend has been found")
