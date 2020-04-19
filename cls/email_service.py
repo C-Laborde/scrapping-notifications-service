@@ -53,7 +53,7 @@ class EmailService:
         # The email client will try to render the last part first
         msg.attach(part1)
         msg.attach(part2)
-
+        # TODO add unsuscribe in email
         self.get_destinations()
         recipients = self.emails
         # TODO this works to send email to multiple persons but the email
