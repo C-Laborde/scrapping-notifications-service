@@ -12,7 +12,8 @@ class Scrapper:
     def get_page(self):
         try:
             page = requests.get(self.url)
-            self.logger.info(f"Page status code: {page.status_code} Download correct")
+            self.logger.info(f"Page status code: {page.status_code} " +
+                             "Download correct")
             self.page = page
             self.site = BeautifulSoup(page.content, "html.parser")
         except ConnectionError:
@@ -37,7 +38,8 @@ class Results(Scrapper):
         # We check if we parsed the right table
         table_ok = validate_table(table)
         if not table_ok:
-            self.logger.warning("It seems we might have parsed the wrong table")
+            self.logger.warning("It seems we might have parsed the wrong " +
+                                "table")
             # TODO send an email to me if that's the case
         self.results_table = table
 
@@ -45,22 +47,23 @@ class Results(Scrapper):
         self.get_table()
         games = []
         games_played = 0
-        # The first row are the columns labels, games details start on the 2nd row
+        # The first row are the columns labels, games details start on the 2nd
+        # row.
         # We iterate over the rows (games) to parse the results per game
         for i in range(1, len(self.results_table)):
             # Game components are local, results, visitant and sets
-            game_components = self.results_table[i].find_all('td')
+            game_parts = self.results_table[i].find_all('td')
             # Game result
-            res = game_components[1].contents
+            res = game_parts[1].contents
             res_loc, res_vis, played = parse_res(res[0])
             games_played += played
             # Game sets
-            sets = parse_sets(game_components[3].contents)
+            sets = parse_sets(game_parts[3].contents)
             game_struct = {
-                "LOCAL": game_components[0].find('a',
-                                                class_='discreto').contents,
-                "VISITANT": game_components[2].find('a',
-                                                    class_='discreto').contents,
+                "LOCAL": game_parts[0].find('a',
+                                            class_='discreto').contents,
+                "VISITANT": game_parts[2].find('a',
+                                               class_='discreto').contents,
                 "RESULT-LOCAL": res_loc,
                 "RESULT-VISITANT": res_vis,
                 "SETS": sets}

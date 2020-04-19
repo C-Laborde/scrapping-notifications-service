@@ -69,10 +69,10 @@ class EmailService:
             msg['To'] = email
             try:
                 self.s.sendmail(msg['From'], msg['To'], msg.as_string())
-            # TODO should I catch this exception here too? Is catched in main to
-            # add it to the logs...
-            # TODO when sending multiple emails, one can fail because of an incorrect
-            # email address but others should be sent
+            # TODO should I catch this exception here too? Is catched in main
+            # to add it to the logs...
+            # TODO when sending multiple emails, one can fail because of an
+            # incorrect email address but others should be sent
             except Exception:
                 raise Exception
             finally:
@@ -160,8 +160,7 @@ def html_msg(weekend, ref_url, document):
                         </tr>
                     </tbody>
                 </table>
-            </div>   
+            </div>
         </body>
     </html>
     """
-
