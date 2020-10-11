@@ -5,7 +5,7 @@ from utils.scrapping import get_results
 from utils.send_email import send_email
 
 
-TEST = False     # False to test real behaviour, True for forcing sending email
+TEST = False  # False to test real behaviour, True for forcing sending email
 
 
 def main(request):
@@ -14,8 +14,8 @@ def main(request):
     logger = logging.getLogger(__name__)
 
     # TODO get url and weekend from db
-    weekend = str(6)
-    url = "http://competicio.fcvoleibol.cat/competiciones.asp?torneo=4253&jornada=" + weekend
+    weekend = str(3)
+    url = "http://competicio.fcvoleibol.cat/competiciones.asp?torneo=4356&jornada=" + weekend
 
     # Parse games results from website
     logger.info("Parsing website")
