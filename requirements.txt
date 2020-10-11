@@ -1,3 +1,5 @@
 # requests is already imported in google cloud functions
 beautifulsoup4==4.8.2
 google-cloud-firestore==1.6.0
+functions-framework=2.0.0
+requests=2.24.0
