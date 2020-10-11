@@ -23,18 +23,36 @@ pip install functions-framework
 
 GOOGLE CLOUD deployment
 
+You will have to install Cloud SDK as explained here:
+https://cloud.google.com/sdk/docs/quickstart
+
+
 https://cloud.google.com/docs/authentication/getting-started
 
-
-gcloud init
+Start the console in the project where you want to deploy your cloud function:
+- gcloud init
 
 (Without env vars)
-gcloud functions deploy NAME --runtime python37 --trigger-http
+- gcloud functions deploy NAME --runtime python37 --trigger-http
 
 With env vars (credentials are set as env vars so I need to declare them
 during deployment)
-gcloud functions deploy NAME --set-env-vars FOO=bar,BAZ=boo --runtime python37 --trigger-http
+- gcloud functions deploy NAME --set-env-vars FOO=bar,BAZ=boo --runtime python37 --trigger-http
 (No spaces between env vars)
+
+OBS: This may raise an error:
+"ERROR: (gcloud.functions.deploy) OperationError: code=7, message=Build failed:
+Cloud Build API has not been used in project XXXX before or it is disabled.
+Enable it by visiting https://console.developers.google.com/apis/api/cloudbuild.googleapis.com/overview?project=XXXX
+then retry. If you enabled this API recently, wait a few minutes for the action
+to propagate to our systems and retry.
+"
+If you follow the link you will be able to enable the API.
+
+A successful deployment will create an endpoint to execute the function.
+The name of the endpoint is printed in the command line when the function is
+deployed. It usually looks something like (don't click, this is a fake link):
+https://us-central1-your-project-id.cloudfunctions.net/funcion-name
 
 TODO: load env var from yaml
 
