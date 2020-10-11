@@ -27,6 +27,7 @@ def get_results(url, logger):
     if len(all_tables) != 4:
         logger.warning("Results table length is not 4. There might have " +
                        "been a problem during parsing")
+        logger.info(f"URL: {url}")
         # TODO send an email to me if that's the case
 
     # The second table is the one with useful results
