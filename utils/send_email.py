@@ -78,7 +78,7 @@ def html_msg(weekend, ref_url, document):
         <body>
             <p>
             Hola, <br> Hay nuevos resultados disponibles de la <//br>
-            <a href= ref_url> jornada {weekend} </a>
+            <a href={ref_url}> jornada {weekend} </a>
             </p>
             <div class="resultados">
                 <h3> RESULTATS D'AQUESTA JORNADA </h3>
