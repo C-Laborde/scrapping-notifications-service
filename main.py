@@ -14,7 +14,7 @@ def main(request):
     logger = logging.getLogger(__name__)
 
     # TODO get url and weekend from db
-    weekend = str(3)
+    weekend = str(4)
     url = "http://competicio.fcvoleibol.cat/competiciones.asp?torneo=4356&jornada=" + weekend
 
     # Parse games results from website
